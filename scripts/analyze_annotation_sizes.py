@@ -1,33 +1,49 @@
 #!/usr/bin/env python3
 """
-Analyze annotation pixel sizes in YOLO dataset format.
-Calculates bounding box sizes in pixels for person annotations (class_id=3)
-across train/valid/test splits.
+Analyze annotation pixel sizes in a YOLO-format dataset.
 
-Outputs:
-  - Per-split and aggregate histograms with bins: 0-4, 4-8, 8-16, 16+ pixels
-  - summary_statistics.txt with detailed metrics
+Calculates bounding-box sizes (sqrt(w_px * h_px)) for person annotations
+across train / valid / test splits and produces:
+  - Per-split and aggregate histograms (PNG)
+  - A summary_statistics.txt with detailed metrics
+
+Usage:
+  python scripts/analyze_annotation_sizes.py
+  python scripts/analyze_annotation_sizes.py --dataset_path path/to/dataset --output_dir results/
 """
 
-import os
 import argparse
-import numpy as np
+import os
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
+
+# ---------------------------------------------------------------------------
+# Make sure the repo root is on sys.path so config can be imported.
+# ---------------------------------------------------------------------------
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from config import PERSON_CLASS_ID
 
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-PERSON_CLASS_ID = 3
-BINS = [0, 4, 8, 16, 1000]          # upper bound kept finite for matplotlib
-BIN_LABELS = ['0-4px', '4-8px', '8-16px', '16px+']
+
+BINS = [0, 4, 8, 16, 1000]                  # upper bound kept finite for matplotlib
+BIN_LABELS = ["0-4px", "4-8px", "8-16px", "16px+"]
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def get_image_dimensions(image_path):
+
+def get_image_dimensions(image_path: str) -> tuple[int, int] | None:
     """Return (width, height) for an image file, or None on error."""
     try:
         with Image.open(image_path) as img:
@@ -37,7 +53,7 @@ def get_image_dimensions(image_path):
         return None
 
 
-def parse_yolo_line(line, img_w, img_h):
+def parse_yolo_line(line: str, img_w: int, img_h: int) -> tuple[int | None, float | None]:
     """Parse a single YOLO annotation line.
 
     Returns (class_id, size_px) where size_px = sqrt(w_px * h_px),
@@ -58,32 +74,33 @@ def parse_yolo_line(line, img_w, img_h):
 # ---------------------------------------------------------------------------
 # Dataset analysis
 # ---------------------------------------------------------------------------
-def analyze_split(dataset_path, split_name):
+
+def analyze_split(dataset_path: str, split_name: str) -> list[float]:
     """Analyze one dataset split and return a list of person annotation sizes."""
     print(f"Analyzing {split_name} split...")
 
-    labels_dir = os.path.join(dataset_path, split_name, 'labels')
-    images_dir = os.path.join(dataset_path, split_name, 'images')
+    labels_dir = os.path.join(dataset_path, split_name, "labels")
+    images_dir = os.path.join(dataset_path, split_name, "images")
 
     if not os.path.exists(labels_dir):
         print(f"  Labels directory not found: {labels_dir}")
         return []
 
-    person_sizes = []
+    person_sizes: list[float] = []
     total_ann = 0
     person_ann = 0
     processed = 0
 
     for label_file in os.listdir(labels_dir):
-        if not label_file.endswith('.txt'):
+        if not label_file.endswith(".txt"):
             continue
 
         label_path = os.path.join(labels_dir, label_file)
 
         # Find corresponding image (.jpg then .png)
-        stem = label_file.replace('.txt', '')
+        stem = label_file.replace(".txt", "")
         image_path = None
-        for ext in ('.jpg', '.png'):
+        for ext in (".jpg", ".png"):
             candidate = os.path.join(images_dir, stem + ext)
             if os.path.exists(candidate):
                 image_path = candidate
@@ -98,7 +115,7 @@ def analyze_split(dataset_path, split_name):
         img_w, img_h = dims
 
         try:
-            with open(label_path, 'r') as f:
+            with open(label_path, "r") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -124,53 +141,49 @@ def analyze_split(dataset_path, split_name):
 # ---------------------------------------------------------------------------
 # Visualisation
 # ---------------------------------------------------------------------------
-def create_histograms(split_data, output_dir):
+
+def create_histograms(split_data: dict[str, list[float]], output_dir: str) -> None:
     """Save per-split and aggregate histograms to *output_dir*."""
     os.makedirs(output_dir, exist_ok=True)
 
-    def _plot(sizes, title, path):
+    def _plot(sizes: list[float], title: str, path: str) -> None:
         plt.figure(figsize=(10, 6))
         if sizes:
-            plt.hist(sizes, bins=BINS, alpha=0.7, edgecolor='black',
-                     color='steelblue')
+            plt.hist(sizes, bins=BINS, alpha=0.7, edgecolor="black", color="steelblue")
             plt.xticks(BINS[:-1], BIN_LABELS)
             mean_s, med_s = np.mean(sizes), np.median(sizes)
-            plt.axvline(mean_s, color='red', ls='--',
-                        label=f'Mean: {mean_s:.1f}px')
-            plt.axvline(med_s, color='green', ls='--',
-                        label=f'Median: {med_s:.1f}px')
+            plt.axvline(mean_s, color="red", ls="--", label=f"Mean: {mean_s:.1f}px")
+            plt.axvline(med_s, color="green", ls="--", label=f"Median: {med_s:.1f}px")
             plt.legend()
         else:
-            plt.text(0.5, 0.5, 'No person annotations',
-                     ha='center', va='center',
-                     transform=plt.gca().transAxes)
-        plt.xlabel('Person Bounding Box Size (pixels)')
-        plt.ylabel('Frequency')
+            plt.text(0.5, 0.5, "No person annotations",
+                     ha="center", va="center", transform=plt.gca().transAxes)
+        plt.xlabel("Person Bounding Box Size (pixels)")
+        plt.ylabel("Frequency")
         plt.title(title)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(path, dpi=300, bbox_inches='tight')
+        plt.savefig(path, dpi=300, bbox_inches="tight")
         plt.close()
 
-    # Per-split
     for name, sizes in split_data.items():
         _plot(sizes,
-              f'Person Annotation Size Distribution — {name.upper()}',
-              os.path.join(output_dir, f'histogram_{name}.png'))
+              f"Person Annotation Size Distribution — {name.upper()}",
+              os.path.join(output_dir, f"histogram_{name}.png"))
 
-    # Aggregate
     all_sizes = [s for sizes in split_data.values() for s in sizes]
     _plot(all_sizes,
-          'Person Annotation Size Distribution — ALL SPLITS',
-          os.path.join(output_dir, 'histogram_aggregate.png'))
+          "Person Annotation Size Distribution — ALL SPLITS",
+          os.path.join(output_dir, "histogram_aggregate.png"))
 
 
 # ---------------------------------------------------------------------------
 # Summary statistics
 # ---------------------------------------------------------------------------
-def _format_summary(split_data):
+
+def _format_summary(split_data: dict[str, list[float]]) -> str:
     """Return the full summary as a string."""
-    lines = []
+    lines: list[str] = []
     w = lines.append
 
     w("=" * 80)
@@ -202,11 +215,11 @@ def _format_summary(split_data):
 
     w("")
     w("SPLIT BREAKDOWN:")
-    for name in ('train', 'valid', 'test'):
+    for name in ("train", "valid", "test"):
         sizes = split_data.get(name)
         if sizes is None:
             continue
-        w(f"")
+        w("")
         w(f"  {name.upper()} Split:")
         if sizes:
             a = np.array(sizes)
@@ -216,7 +229,7 @@ def _format_summary(split_data):
             w(f"    Range  : {np.min(a):.1f} – {np.max(a):.1f} px")
 
             hist, _ = np.histogram(a, bins=BINS)
-            w(f"    Size Distribution:")
+            w("    Size Distribution:")
             for label, count in zip(BIN_LABELS, hist):
                 pct = count / len(a) * 100
                 w(f"      {label}: {count:,} ({pct:.1f}%)")
@@ -226,12 +239,12 @@ def _format_summary(split_data):
     return "\n".join(lines)
 
 
-def save_summary(split_data, output_dir):
+def save_summary(split_data: dict[str, list[float]], output_dir: str) -> str:
     """Write summary_statistics.txt and return its path."""
     os.makedirs(output_dir, exist_ok=True)
     text = _format_summary(split_data)
-    path = os.path.join(output_dir, 'summary_statistics.txt')
-    with open(path, 'w') as f:
+    path = os.path.join(output_dir, "summary_statistics.txt")
+    with open(path, "w") as f:
         f.write(text + "\n")
     return path
 
@@ -239,20 +252,21 @@ def save_summary(split_data, output_dir):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main():
+
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description='Analyze person annotation sizes in a YOLO dataset')
-    parser.add_argument('--dataset_path', type=str,
-                        default='roboflow_data/Beach Counter.v16i.yolov8',
-                        help='Path to dataset directory')
-    parser.add_argument('--output_dir', type=str,
-                        default='annotation_analysis',
-                        help='Output directory for results')
+        description="Analyze person annotation sizes in a YOLO dataset"
+    )
+    parser.add_argument("--dataset_path", type=str,
+                        default="roboflow_data/Beach Counter.v16i.yolov8",
+                        help="Path to dataset directory")
+    parser.add_argument("--output_dir", type=str,
+                        default="annotation_analysis",
+                        help="Output directory for results")
     args = parser.parse_args()
 
-    # Collect sizes per split
-    split_data = {}
-    for split in ('train', 'valid', 'test'):
+    split_data: dict[str, list[float]] = {}
+    for split in ("train", "valid", "test"):
         sizes = analyze_split(args.dataset_path, split)
         if sizes:
             split_data[split] = sizes
@@ -265,8 +279,8 @@ def main():
     summary_path = save_summary(split_data, args.output_dir)
 
     print(f"\nAnalysis complete!")
-    print(f"  Summary  : {summary_path}")
-    print(f"  Histograms saved to {args.output_dir}/")
+    print(f"  Summary:    {summary_path}")
+    print(f"  Histograms: {args.output_dir}/")
 
 
 if __name__ == "__main__":

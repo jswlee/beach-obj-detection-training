@@ -18,9 +18,3 @@ tqdm>=4.65.0
 
 # Configuration and data serialization
 PyYAML>=6.0
-
-# Optional: For advanced hyperparameter tuning and experiments
-scikit-learn>=1.3.0
-
-# Development and testing (optional)
-pytest>=7.0.0

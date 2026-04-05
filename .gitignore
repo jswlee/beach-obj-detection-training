@@ -6,5 +6,6 @@ processed_data/
 runs/
 training_results/
 *.pyc
-__pycache__
+__pycache__/
 roboflow_data/
+annotation_analysis/
