@@ -1,0 +1,10 @@
+venv/
+.env
+*.pt
+*.pth
+processed_data/
+runs/
+training_results/
+*.pyc
+__pycache__
+roboflow_data/
