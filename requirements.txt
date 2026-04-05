@@ -1,4 +1,6 @@
 # Core dependencies for beach object detection training
+# Install torch with CUDA 12.1 support using:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --force-reinstall
 torch>=2.0.0
 torchvision>=0.15.0
 ultralytics>=8.0.0

@@ -521,9 +521,9 @@ def main() -> int:
                        help="Directory for processed (ROI-masked / tiled) images")
     g_pre.add_argument("--skip-preprocessing", action="store_true",
                        help="Skip preprocessing if processed data already exists")
-    g_pre.add_argument("--enable-slicing", action="store_true",
+    g_pre.add_argument("--enable-slicing", action="store_true", default=True,
                        help="Enable image slicing into 640×640 tiles with overlap")
-    g_pre.add_argument("--person-only", action="store_true",
+    g_pre.add_argument("--person-only", action="store_true", default=True,
                        help="Keep only person-class annotations")
     g_pre.add_argument("--person-class-id", type=int, default=PERSON_CLASS_ID,
                        help="Class ID for person in the raw dataset")
