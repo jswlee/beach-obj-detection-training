@@ -110,7 +110,8 @@ def train_yolo_model(
                        small-object detection.
 
     Returns:
-        Absolute path to the saved best.pt model weights.
+        Tuple of (absolute path to the saved best.pt model weights,
+        Path to the Ultralytics run directory).
     """
     start_time = datetime.now()
 
@@ -195,7 +196,7 @@ def train_yolo_model(
     end_time = datetime.now()
 
     # Locate best weights written by Ultralytics
-    run_dir = Path(output_dir) / "detect" / run_name
+    run_dir = Path(model.trainer.save_dir)
     best_auto = run_dir / "weights" / "best.pt"
     best_model_path = TRAINING_RESULTS_DIR / "models" / f"{run_name}.pt"
     best_model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -210,7 +211,7 @@ def train_yolo_model(
     print(f"  Run dir:    {run_dir}\n")
 
     save_training_summary(run_dir, best_model_path, start_time, end_time)
-    return str(best_model_path)
+    return str(best_model_path), run_dir
 
 
 # ---------------------------------------------------------------------------
@@ -527,7 +528,7 @@ def main() -> int:
                        help="Keep only person-class annotations")
     g_pre.add_argument("--person-class-id", type=int, default=PERSON_CLASS_ID,
                        help="Class ID for person in the raw dataset")
-    g_pre.add_argument("--min-pixel-size", type=int, default=0,
+    g_pre.add_argument("--min-pixel-size", type=int, default=4,
                        help="Filter annotations where sqrt(w*h) < N pixels")
 
     # --- Training args ---
@@ -603,7 +604,21 @@ def main() -> int:
     print("-" * 70)
 
     if args.run_name is None:
-        args.run_name = f"beach_detection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        model_name = Path(args.model).stem if args.model.endswith('.pt') else args.model
+        p2_suffix = "_p2" if args.p2 else ""
+        args.run_name = f"{model_name}{p2_suffix}_beach_detection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+    # Save command line arguments to a text file
+    args_dict = vars(args)
+    args_file = TRAINING_RESULTS_DIR / "args" / f"{args.run_name}_args.txt"
+    args_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(args_file, 'w') as f:
+        f.write(f"# Training arguments for {args.run_name}\n")
+        f.write(f"# Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        for key, value in sorted(args_dict.items()):
+            if value is not None and key != 'run_name':  # Skip run_name as it's in the filename
+                f.write(f"{key} = {value}\n")
 
     print(f"  Run:       {args.run_name}")
     print(f"  Model:     {args.model}")
@@ -614,7 +629,7 @@ def main() -> int:
     print(f"  Optimizer: {args.optimizer}\n")
 
     try:
-        model_path = train_yolo_model(
+        model_path, run_dir = train_yolo_model(
             dataset_yaml=str(dataset_yaml_path),
             model_size=args.model,
             epochs=args.epochs,
@@ -631,7 +646,6 @@ def main() -> int:
         )
 
         # Step 3: Post-training evaluation
-        run_dir = TRAINING_RESULTS_DIR / "detect" / args.run_name
         if args.enable_slicing:
             run_merged_test_inference(
                 model_path=model_path,
