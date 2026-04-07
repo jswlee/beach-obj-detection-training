@@ -606,7 +606,8 @@ def main() -> int:
     if args.run_name is None:
         model_name = Path(args.model).stem if args.model.endswith('.pt') else args.model
         p2_suffix = "_p2" if args.p2 else ""
-        args.run_name = f"{model_name}{p2_suffix}_beach_detection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        pixel_suffix = f"_{args.min_pixel_size}px" if args.min_pixel_size > 0 else ""
+        args.run_name = f"{model_name}{p2_suffix}{pixel_suffix}_beach_detection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     # Save command line arguments to a text file
     args_dict = vars(args)
