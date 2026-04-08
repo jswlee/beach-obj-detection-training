@@ -36,7 +36,7 @@ from config import PERSON_CLASS_ID
 # ---------------------------------------------------------------------------
 
 BINS = [0, 4, 8, 16, 1000]                  # upper bound kept finite for matplotlib
-BIN_LABELS = ["0-4px", "4-8px", "8-16px", "16px+"]
+BIN_LABELS = ["[0,4)px", "[4,8)px", "[8,16)px", "[16,1000)px"]
 
 
 # ---------------------------------------------------------------------------
@@ -149,11 +149,29 @@ def create_histograms(split_data: dict[str, list[float]], output_dir: str) -> No
     def _plot(sizes: list[float], title: str, path: str) -> None:
         plt.figure(figsize=(10, 6))
         if sizes:
-            plt.hist(sizes, bins=BINS, alpha=0.7, edgecolor="black", color="steelblue")
-            plt.xticks(BINS[:-1], BIN_LABELS)
+            # Use histogram to get counts, then plot as bar chart for proper categorical display
+            hist, _ = np.histogram(sizes, bins=BINS)
+            x_positions = np.arange(len(BIN_LABELS))
+            bars = plt.bar(x_positions, hist, alpha=0.7, edgecolor="black", color="steelblue")
+            plt.xticks(x_positions, BIN_LABELS)
+            
+            # Add percentage labels on top of each bar
+            total_count = len(sizes)
+            for i, (bar, count) in enumerate(zip(bars, hist)):
+                percentage = (count / total_count) * 100
+                plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(hist)*0.01,
+                        f'{percentage:.1f}%', ha='center', va='bottom', fontsize=10, fontweight='bold')
+            
             mean_s, med_s = np.mean(sizes), np.median(sizes)
-            plt.axvline(mean_s, color="red", ls="--", label=f"Mean: {mean_s:.1f}px")
-            plt.axvline(med_s, color="green", ls="--", label=f"Median: {med_s:.1f}px")
+            # For vertical lines, we need to map the mean/median to appropriate bin positions
+            # Find which bin the mean and median fall into
+            mean_bin = np.digitize(mean_s, BINS) - 1
+            med_bin = np.digitize(med_s, BINS) - 1
+            # Clamp to valid bin indices
+            mean_bin = max(0, min(mean_bin, len(BIN_LABELS)-1))
+            med_bin = max(0, min(med_bin, len(BIN_LABELS)-1))
+            plt.axvline(x_positions[mean_bin], color="red", ls="--", label=f"Mean: {mean_s:.1f}px")
+            plt.axvline(x_positions[med_bin], color="green", ls="--", label=f"Median: {med_s:.1f}px")
             plt.legend()
         else:
             plt.text(0.5, 0.5, "No person annotations",
@@ -206,6 +224,11 @@ def _format_summary(split_data: dict[str, list[float]]) -> str:
         hist, _ = np.histogram(arr, bins=BINS)
         w("")
         w("  Size Distribution:")
+        w("    [0,4)px   : 0 to <4 pixels")
+        w("    [4,8)px   : 4 to <8 pixels") 
+        w("    [8,16)px  : 8 to <16 pixels")
+        w("    [16,1000)px: 16 to <1000 pixels")
+        w("")
         for label, count in zip(BIN_LABELS, hist):
             pct = count / len(arr) * 100
             w(f"    {label}: {count:,} ({pct:.1f}%)")
@@ -230,6 +253,11 @@ def _format_summary(split_data: dict[str, list[float]]) -> str:
 
             hist, _ = np.histogram(a, bins=BINS)
             w("    Size Distribution:")
+            w("      [0,4)px   : 0 to <4 pixels")
+            w("      [4,8)px   : 4 to <8 pixels") 
+            w("      [8,16)px  : 8 to <16 pixels")
+            w("      [16,1000)px: 16 to <1000 pixels")
+            w("")
             for label, count in zip(BIN_LABELS, hist):
                 pct = count / len(a) * 100
                 w(f"      {label}: {count:,} ({pct:.1f}%)")

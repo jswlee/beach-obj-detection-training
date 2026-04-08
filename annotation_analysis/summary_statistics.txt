@@ -1,0 +1,72 @@
+================================================================================
+PERSON ANNOTATION SIZE ANALYSIS SUMMARY
+================================================================================
+
+PERSON METRICS (All Splits Combined):
+  Total Annotations : 16,599
+  Mean Size         : 17.7 px
+  Median Size       : 14.1 px
+  Std Deviation     : 15.3 px
+  Min Size          : 1.3 px
+  Max Size          : 309.9 px
+
+  Size Distribution:
+    [0,4)px   : 0 to <4 pixels
+    [4,8)px   : 4 to <8 pixels
+    [8,16)px  : 8 to <16 pixels
+    [16,1000)px: 16 to <1000 pixels
+
+    [0,4)px: 650 (3.9%)
+    [4,8)px: 2,934 (17.7%)
+    [8,16)px: 6,091 (36.7%)
+    [16,1000)px: 6,924 (41.7%)
+
+SPLIT BREAKDOWN:
+
+  TRAIN Split:
+    Count  : 11,677
+    Mean   : 17.6 px
+    Median : 14.1 px
+    Range  : 1.3 – 309.9 px
+    Size Distribution:
+      [0,4)px   : 0 to <4 pixels
+      [4,8)px   : 4 to <8 pixels
+      [8,16)px  : 8 to <16 pixels
+      [16,1000)px: 16 to <1000 pixels
+
+      [0,4)px: 485 (4.2%)
+      [4,8)px: 2,114 (18.1%)
+      [8,16)px: 4,262 (36.5%)
+      [16,1000)px: 4,816 (41.2%)
+
+  VALID Split:
+    Count  : 2,866
+    Mean   : 18.0 px
+    Median : 14.4 px
+    Range  : 2.0 – 203.0 px
+    Size Distribution:
+      [0,4)px   : 0 to <4 pixels
+      [4,8)px   : 4 to <8 pixels
+      [8,16)px  : 8 to <16 pixels
+      [16,1000)px: 16 to <1000 pixels
+
+      [0,4)px: 87 (3.0%)
+      [4,8)px: 488 (17.0%)
+      [8,16)px: 1,042 (36.4%)
+      [16,1000)px: 1,249 (43.6%)
+
+  TEST Split:
+    Count  : 2,056
+    Mean   : 17.8 px
+    Median : 13.7 px
+    Range  : 1.5 – 197.0 px
+    Size Distribution:
+      [0,4)px   : 0 to <4 pixels
+      [4,8)px   : 4 to <8 pixels
+      [8,16)px  : 8 to <16 pixels
+      [16,1000)px: 16 to <1000 pixels
+
+      [0,4)px: 78 (3.8%)
+      [4,8)px: 332 (16.1%)
+      [8,16)px: 787 (38.3%)
+      [16,1000)px: 859 (41.8%)
