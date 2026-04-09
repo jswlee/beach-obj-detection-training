@@ -191,6 +191,7 @@ def train_yolo_model(
         copy_paste=hp["copy_paste"],
         patience=patience,
         close_mosaic=hp["close_mosaic"],
+        workers=0,
     )
 
     end_time = datetime.now()

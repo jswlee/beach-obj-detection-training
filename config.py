@@ -83,7 +83,7 @@ TRAIN_DEFAULTS = {
     "weight_decay": 0.0005,
 
     # Warmup
-    "warmup_epochs": 5,
+    "warmup_epochs": 30,
     "warmup_momentum": 0.8,
     "warmup_bias_lr": 0.1,
 
