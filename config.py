@@ -71,7 +71,7 @@ TRAIN_DEFAULTS = {
 
     # Schedule
     "epochs": 300,               # Maximum training epochs
-    "patience": 20,              # Early-stopping patience (epochs without improvement)
+    "patience": 30,              # Early-stopping patience (epochs without improvement)
     "batch_size": 2,             # Images per batch
     "img_size": 640,             # Training image resolution (matches tile size)
 
