@@ -448,14 +448,14 @@ def _write_metrics(
                 }
 
     # Write JSON
-    json_path = out_dir / "inference_metrics.json"
+    json_path = out_dir / "merged_metrics.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump({"summary": summary, "frames": frame_metrics}, f, indent=2)
 
     # Write human-readable text
-    txt_path = out_dir / "inference_metrics.txt"
+    txt_path = out_dir / "merged_metrics.txt"
     with open(txt_path, "w", encoding="utf-8") as f:
-        f.write("INFERENCE METRICS\n")
+        f.write("MERGED TILED INFERENCE METRICS\n")
         f.write("=" * 80 + "\n")
         f.write(f"Model:         {summary['model']}\n")
         f.write(f"Device:        {summary['device']}\n")
@@ -542,16 +542,25 @@ def main() -> int:
         raise FileNotFoundError(f"Input dir not found: {input_dir}")
 
     if args.output_dir is None:
-        args.output_dir = str(model_path.parent.parent / "inference_output")
+        # Try to place output under the training run directory like preprocess_and_train.py does
+        # Model path is typically: training_results/models/<run_name>.pt
+        # Run directory is: training_results/runs/<run_name>
+        if model_path.parent.name == "models":
+            training_results_dir = model_path.parent.parent
+            run_name = model_path.stem  # e.g., "yolov8n_beach_detection_20240101_120000"
+            args.output_dir = str(training_results_dir / "runs" / run_name / "merged_test_inference")
+        else:
+            # Fallback: place next to the model
+            args.output_dir = str(model_path.parent / "merged_test_inference")
     out_dir = Path(args.output_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Output sub-directories
-    labels_dir = out_dir / "labels"
+    # Output sub-directories (match preprocess_and_train.py naming)
+    predictions_dir = out_dir / "predictions"
     vis_dir = out_dir / "visualized"
     vis_gt_dir = out_dir / "visualized_gt"
     if args.save_txt:
-        labels_dir.mkdir(parents=True, exist_ok=True)
+        predictions_dir.mkdir(parents=True, exist_ok=True)
     if args.save_img:
         vis_dir.mkdir(parents=True, exist_ok=True)
         vis_gt_dir.mkdir(parents=True, exist_ok=True)
@@ -657,7 +666,7 @@ def main() -> int:
             if args.save_txt:
                 h, w = img.shape[:2]
                 lines = [to_yolo_line(d, w, h) for d in dets]
-                (labels_dir / f"{img_path.stem}.txt").write_text("\n".join(lines))
+                (predictions_dir / f"{img_path.stem}.txt").write_text("\n".join(lines))
 
             if args.save_img and vis is not None:
                 cv2.imwrite(str(vis_dir / img_path.name), vis)
