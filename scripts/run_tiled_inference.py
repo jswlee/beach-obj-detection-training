@@ -509,10 +509,11 @@ def main() -> int:
                         help="Device: 'auto', 'cpu', or 'cuda'")
     parser.add_argument("--gt-person-class-id", type=int, default=PERSON_CLASS_ID,
                         help="Class ID for person in ground-truth labels")
-    parser.add_argument("--save-img", action="store_true",
-                        help="Save annotated full-size images")
-    parser.add_argument("--save-txt", action="store_true",
-                        help="Save YOLO-format label files in full-image coords")
+    parser.add_argument("--no-save-img", action="store_false", dest="save_img",
+                        help="Do not save annotated full-size images")
+    parser.add_argument("--no-save-txt", action="store_false", dest="save_txt",
+                        help="Do not save YOLO-format label files in full-image coords")
+    parser.set_defaults(save_img=True, save_txt=True)
     parser.add_argument("--half", action="store_true",
                         help="Use FP16 inference on CUDA")
     parser.add_argument("--show", action="store_true",
@@ -523,8 +524,9 @@ def main() -> int:
                         help="Delay between frames in ms")
     parser.add_argument("--max-frames", type=int, default=0,
                         help="Stop after N frames (0 = no limit)")
-    parser.add_argument("--calc-metrics", action="store_true",
-                        help="Calculate mAP metrics (requires GT labels)")
+    parser.add_argument("--no-calc-metrics", action="store_false", dest="calc_metrics",
+                        help="Do not calculate mAP metrics")
+    parser.set_defaults(calc_metrics=True)
     parser.add_argument("--num-classes", type=int, default=inf["num_classes"],
                         help="Number of classes in the dataset")
 
