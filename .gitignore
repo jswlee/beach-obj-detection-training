@@ -8,3 +8,5 @@ training_results/
 *.pyc
 __pycache__/
 roboflow_data/
+yolov8n_beach_detection_20260408_100357/
+yolov8n_beach_detection_20260408_100357_args.txt
