@@ -121,6 +121,8 @@ def collect_results() -> list[dict]:
 
         results.append({"label": label, "run": run_dir.name, **summary})
 
+    metric_keys = [k for k, _, _ in METRICS]
+    results = [r for r in results if all(r.get(k, 0) != 0 for k in metric_keys)]
     results.sort(key=lambda r: r["label"])
     return results
 
