@@ -11,6 +11,7 @@ Produces one bar chart per metric saved to:
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -65,6 +66,32 @@ def build_label(args: dict) -> str:
     return f"{model_name}-{arch}-{ann}"
 
 
+def build_label_from_folder(folder_name: str) -> str:
+    """Parse a run folder name into a model label when no args file exists.
+
+    Handles patterns like:
+      yolov8n_4px_p2_beach_detection_...  -> yolov8n-p2-sub4px
+      yolo26l_4x_p2_beach_detection_...   -> yolo26l-p2-sub4px  (4x treated as 4px)
+      yolov8m_8px_beach_detection_...     -> yolov8m-p3-sub8px
+      yolov8n_beach_detection_...         -> yolov8n-p3-all
+    """
+    prefix = re.split(r"_beach_detection_", folder_name, maxsplit=1)[0]
+    tokens = prefix.split("_")
+
+    model_name = tokens[0] if tokens else folder_name
+
+    arch = "p2" if "p2" in tokens[1:] else "p3"
+
+    ann = "all"
+    for tok in tokens[1:]:
+        m = re.fullmatch(r"(\d+)(?:px?|x)", tok, re.IGNORECASE)
+        if m:
+            ann = f"sub{m.group(1)}px"
+            break
+
+    return f"{model_name}-{arch}-{ann}"
+
+
 def collect_results() -> list[dict]:
     """Walk RUNS_DIR and collect metrics + label for each model."""
     if not RUNS_DIR.exists():
@@ -90,11 +117,11 @@ def collect_results() -> list[dict]:
             args = parse_args_file(args_file)
             label = build_label(args)
         else:
-            print(f"  [warn] no args file for {run_dir.name}, using folder name")
-            label = run_dir.name
+            label = build_label_from_folder(run_dir.name)
 
         results.append({"label": label, "run": run_dir.name, **summary})
 
+    results.sort(key=lambda r: r["label"])
     return results
 
 
