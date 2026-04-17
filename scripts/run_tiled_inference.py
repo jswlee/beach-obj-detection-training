@@ -543,12 +543,19 @@ def main() -> int:
 
     if args.output_dir is None:
         # Try to place output under the training run directory like preprocess_and_train.py does
-        # Model path is typically: training_results/models/<run_name>.pt
-        # Run directory is: training_results/runs/<run_name>
+        # Model path can be:
+        #   - training_results/models/<run_name>.pt
+        #   - training_results/runs/<run_name>/weights/best.pt
+        # Run directory is: training_results/runs/<run_name>/merged_test_inference
         if model_path.parent.name == "models":
+            # Standard location: training_results/models/<run_name>.pt
             training_results_dir = model_path.parent.parent
-            run_name = model_path.stem  # e.g., "yolov8n_beach_detection_20240101_120000"
+            run_name = model_path.stem
             args.output_dir = str(training_results_dir / "runs" / run_name / "merged_test_inference")
+        elif model_path.parent.name == "weights":
+            # Ultralytics run location: training_results/runs/<run_name>/weights/best.pt
+            run_dir = model_path.parent.parent
+            args.output_dir = str(run_dir / "merged_test_inference")
         else:
             # Fallback: place next to the model
             args.output_dir = str(model_path.parent / "merged_test_inference")
