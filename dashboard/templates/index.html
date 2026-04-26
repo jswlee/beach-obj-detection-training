@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Beach Detection Model Comparison Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .header-actions {
+            margin-top: 15px;
+        }
+        
+        .btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .filters-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f0f2f5;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .filter-chip:hover {
+            background: #e8eaf6;
+        }
+        
+        .filter-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .filter-chip input {
+            cursor: pointer;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .panel h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #444;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+        
+        .metric-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .metric-option {
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .metric-option:hover {
+            background: #f5f7fa;
+        }
+        
+        .metric-option.active {
+            background: #e8eaf6;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .model-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .model-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .model-item:hover {
+            background: #f5f7fa;
+        }
+        
+        .model-item.selected {
+            background: #e8eaf6;
+        }
+        
+        .model-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .model-info {
+            flex: 1;
+        }
+        
+        .model-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .model-meta {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-btn {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .chart-btn:hover {
+            background: #f5f7fa;
+            border-color: #667eea;
+        }
+        
+        .chart-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .details-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .details-section h4 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .details-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        
+        .details-table td:first-child {
+            color: #666;
+            width: 50%;
+        }
+        
+        .details-table td:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .no-selection {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        
+        .no-selection-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            padding: 10px 30px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .comparison-mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .comparison-mode {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .comparison-mode:hover {
+            border-color: #667eea;
+        }
+        
+        .comparison-mode.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>YOLO Beach Detection Model Comparison</h1>
+        <div class="subtitle">Compare training and inference metrics across models</div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="refreshData()">
+                <span id="refresh-icon">🔄</span> Refresh Data
+            </button>
+            <button class="btn" onclick="exportChart()">📊 Export Chart</button>
+            <button class="btn" onclick="exportData()">📋 Export Data (CSV)</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="filters-section">
+            <h2>🔍 Quick Filters</h2>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>YOLO Version</label>
+                    <div class="filter-options" id="yolo-version-filters"></div>
+                </div>
+                <div class="filter-group">
+                    <label>Model Size</label>
+                    <div class="filter-options" id="size-filters"></div>
+                </div>
+                <div class="filter-group">
+                    <label>Architecture</label>
+                    <div class="filter-options" id="arch-filters"></div>
+                </div>
+                <div class="filter-group">
+                    <label>Pixel Filter</label>
+                    <div class="filter-options" id="pixel-filters"></div>
+                </div>
+            </div>
+            
+            <div class="comparison-mode-selector">
+                <button class="comparison-mode active" onclick="setComparisonMode('individual')">
+                    Individual Models
+                </button>
+                <button class="comparison-mode" onclick="setComparisonMode('p2p3')">
+                    P2 vs P3 (Same Model)
+                </button>
+                <button class="comparison-mode" onclick="setComparisonMode('pixels')">
+                    Pixel Filter Comparison
+                </button>
+                <button class="comparison-mode" onclick="setComparisonMode('yolo-versions')">
+                    YOLO Version Comparison
+                </button>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>📊 Select Metric</h3>
+                    <div class="metric-selector" id="metric-selector"></div>
+                </div>
+                
+                <div class="panel">
+                    <h3>🤖 Select Models</h3>
+                    <div style="margin-bottom: 15px;">
+                        <button class="chart-btn" onclick="selectAll()">Select All</button>
+                        <button class="chart-btn" onclick="deselectAll()">Deselect All</button>
+                    </div>
+                    <div class="model-list" id="model-list"></div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title" id="chart-title">Select models to compare</div>
+                        <div class="chart-actions">
+                            <button class="chart-btn active" onclick="setChartType('bar')">Bar</button>
+                            <button class="chart-btn" onclick="setChartType('line')">Line</button>
+                            <button class="chart-btn" onclick="setChartType('radar')">Radar</button>
+                            <button class="chart-btn" onclick="setChartType('scatter')">Scatter</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="details-panel">
+                    <h3>📋 Model Details</h3>
+                    <div id="details-content" class="no-selection">
+                        <div class="no-selection-icon">📈</div>
+                        <p>Select a model to view detailed metrics</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="last-updated">Last updated: Never</span>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

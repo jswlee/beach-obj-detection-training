@@ -20,3 +20,6 @@ tqdm>=4.65.0
 
 # Configuration and data serialization
 PyYAML>=6.0
+
+# Dashboard web server
+flask>=2.3.0
