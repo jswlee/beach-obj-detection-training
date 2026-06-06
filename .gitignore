@@ -5,8 +5,11 @@ venv/
 processed_data/
 runs/
 training_results/
+training_results_old/
 *.pyc
 __pycache__/
 roboflow_data/
+results/
 yolov8n_beach_detection_20260408_100357/
 yolov8n_beach_detection_20260408_100357_args.txt
+yolo26l_baseline_inference/

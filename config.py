@@ -70,20 +70,20 @@ TRAIN_DEFAULTS = {
     "model": "yolov8n.pt",       # Base model weights (or path to a .pt checkpoint)
 
     # Schedule
-    "epochs": 300,               # Maximum training epochs
-    "patience": 30,              # Early-stopping patience (epochs without improvement)
-    "batch_size": 2,             # Images per batch
+    "epochs": 150,               # Maximum training epochs
+    "patience": 0,              # Early-stopping patience (epochs without improvement)
+    "batch_size": 8,             # Images per batch
     "img_size": 640,             # Training image resolution (matches tile size)
 
     # Optimiser
-    "optimizer": "auto",         # "auto" lets Ultralytics choose; or "AdamW", "SGD", etc.
+    "optimizer":"AdamW",         # "auto" lets Ultralytics choose; or "AdamW", "SGD", etc.
     "lr0": 0.001,                # Initial learning rate
     "lrf": 0.01,                 # Final learning-rate fraction (cosine decay target)
     "momentum": 0.937,
     "weight_decay": 0.0005,
 
     # Warmup
-    "warmup_epochs": 30,
+    "warmup_epochs": 3,
     "warmup_momentum": 0.8,
     "warmup_bias_lr": 0.1,
 
